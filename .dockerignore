@@ -1,0 +1,14 @@
+.git
+.gitignore
+README.md
+.env
+*.md
+.vscode
+.idea
+bin/
+dist/
+vendor/
+*.exe
+*.db
+*.sqlite
+logs/

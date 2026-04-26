@@ -1,0 +1,89 @@
+package config
+
+import (
+	"os"
+	"strconv"
+)
+
+type RedisConfig struct {
+	Host     string
+	Port     string
+	Password string
+	DB       int
+}
+
+type Config struct {
+	Server   ServerConfig
+	Database DatabaseConfig
+	JWT      JWTConfig
+	Redis    RedisConfig
+}
+
+type ServerConfig struct {
+	Port string
+	Env  string
+}
+
+type DatabaseConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	DBName   string
+	SSLMode  string
+}
+
+type JWTConfig struct {
+	Secret     string
+	ExpireTime int
+}
+
+func Load() *Config {
+	return &Config{
+		Server: ServerConfig{
+			Port: getEnv("SERVER_PORT", "8080"),
+			Env:  getEnv("ENV", "development"),
+		},
+		Database: DatabaseConfig{
+			Host:     getEnv("DB_HOST", "localhost"),
+			Port:     getEnv("DB_PORT", "5432"),
+			User:     getEnv("DB_USER", "postgres"),
+			Password: getEnv("DB_PASSWORD", "postgres"),
+			DBName:   getEnv("DB_NAME", "ecommerce"),
+			SSLMode:  getEnv("DB_SSLMODE", "disable"),
+		},
+		JWT: JWTConfig{
+			Secret:     getEnv("JWT_SECRET", "your-secret-key-change-this"),
+			ExpireTime: getEnvAsInt("JWT_EXPIRE_TIME", 24),
+		},
+		Redis: RedisConfig{
+			Host:     getEnv("REDIS_HOST", "localhost"),
+			Port:     getEnv("REDIS_PORT", "6379"),
+			Password: getEnv("REDIS_PASSWORD", ""),
+			DB:       getEnvAsInt("REDIS_DB", 0),
+		},
+	}
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+func getEnvAsInt(key string, defaultValue int) int {
+	valueStr := getEnv(key, "")
+	if value, err := strconv.Atoi(valueStr); err == nil {
+		return value
+	}
+	return defaultValue
+}
+
+func (c *Config) IsDevelopment() bool {
+	return c.Server.Env == "development"
+}
+
+func (c *Config) IsProduction() bool {
+	return c.Server.Env == "production"
+}
