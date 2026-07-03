@@ -6,6 +6,7 @@ import (
 	"github.com/dat19/gin-ecommerce-api/internal/models"
 	"github.com/dat19/gin-ecommerce-api/internal/service"
 	"github.com/dat19/gin-ecommerce-api/pkg/utils"
+	"github.com/dat19/gin-ecommerce-api/pkg/validator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -47,6 +48,12 @@ func (h *UserHandler) Update(c *gin.Context) {
 	var req models.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ValidationErrorResponse(c, err)
+		return
+	}
+
+	// Validate request
+	if err := validator.ValidateUpdateUserRequest(req.FirstName, req.LastName, nil); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 

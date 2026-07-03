@@ -6,6 +6,7 @@ import (
 	"github.com/dat19/gin-ecommerce-api/internal/models"
 	"github.com/dat19/gin-ecommerce-api/internal/service"
 	"github.com/dat19/gin-ecommerce-api/pkg/utils"
+	"github.com/dat19/gin-ecommerce-api/pkg/validator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,6 +27,16 @@ func (h *PostHandler) Create(c *gin.Context) {
 		utils.ValidationErrorResponse(c, err)
 		return
 	}
+
+	// Validate request
+	if err := validator.ValidateCreatePostRequest(req.Title, req.Content); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Normalize data
+	req.Title = validator.TrimWhitespace(req.Title)
+	req.Content = validator.TrimWhitespace(req.Content)
 
 	post, err := h.service.Create(c.Request.Context(), userID, req)
 	if err != nil {
@@ -73,6 +84,12 @@ func (h *PostHandler) Update(c *gin.Context) {
 	var req models.UpdatePostRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ValidationErrorResponse(c, err)
+		return
+	}
+
+	// Validate request
+	if err := validator.ValidateUpdatePostRequest(req.Title, req.Content, req.IsActive); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 

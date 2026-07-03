@@ -6,6 +6,7 @@ import (
 	"github.com/dat19/gin-ecommerce-api/internal/models"
 	"github.com/dat19/gin-ecommerce-api/internal/service"
 	"github.com/dat19/gin-ecommerce-api/pkg/utils"
+	"github.com/dat19/gin-ecommerce-api/pkg/validator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,6 +24,16 @@ func (h *ProductHandler) Create(c *gin.Context) {
 		utils.ValidationErrorResponse(c, err)
 		return
 	}
+
+	// Validate request
+	if err := validator.ValidateCreateProductRequest(req.Name, req.Description, req.Price, req.Stock, req.Category, req.Type, req.ImageURL); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Normalize data
+	req.Name = validator.TrimWhitespace(req.Name)
+	req.Description = validator.TrimWhitespace(req.Description)
 
 	product, err := h.service.Create(c.Request.Context(), req)
 	if err != nil {
@@ -65,6 +76,12 @@ func (h *ProductHandler) Update(c *gin.Context) {
 	var req models.UpdateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ValidationErrorResponse(c, err)
+		return
+	}
+
+	// Validate request
+	if err := validator.ValidateUpdateProductRequest(req.Name, req.Description, req.Price, req.Stock, req.Category, req.Type, req.ImageURL, req.IsActive); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 

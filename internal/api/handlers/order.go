@@ -6,6 +6,7 @@ import (
 	"github.com/dat19/gin-ecommerce-api/internal/models"
 	"github.com/dat19/gin-ecommerce-api/internal/service"
 	"github.com/dat19/gin-ecommerce-api/pkg/utils"
+	"github.com/dat19/gin-ecommerce-api/pkg/validator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,6 +27,15 @@ func (h *OrderHandler) Create(c *gin.Context) {
 		utils.ValidationErrorResponse(c, err)
 		return
 	}
+
+	// Validate request
+	if err := validator.ValidateCreateOrderRequest(req.ShippingAddress, req.PaymentMethod); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Normalize data
+	req.ShippingAddress = validator.TrimWhitespace(req.ShippingAddress)
 
 	order, err := h.service.Create(c.Request.Context(), userID, req)
 	if err != nil {
@@ -79,6 +89,17 @@ func (h *OrderHandler) UpdateStatus(c *gin.Context) {
 	id := c.Param("id")
 
 	var req models.UpdateOrderStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ValidationErrorResponse(c, err)
+		return
+	}
+
+	// Validate request
+	if err := validator.ValidateUpdateOrderStatusRequest(req.Status); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	if err := h.service.UpdateStatus(c.Request.Context(), id, req.Status); err != nil {
 		status := http.StatusInternalServerError
 		if err == utils.ErrNotFound {

@@ -7,6 +7,7 @@ import (
 	"github.com/dat19/gin-ecommerce-api/internal/models"
 	"github.com/dat19/gin-ecommerce-api/internal/service"
 	"github.com/dat19/gin-ecommerce-api/pkg/utils"
+	"github.com/dat19/gin-ecommerce-api/pkg/validator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -68,6 +69,12 @@ func (h *CartHandler) AddItem(c *gin.Context) {
 		return
 	}
 
+	// Validate request
+	if err := validator.ValidateAddToCartRequest(req.ProductID, req.Quantity); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	if err := h.service.AddItem(c.Request.Context(), userID, req.ProductID, req.Quantity); err != nil {
 		status := http.StatusInternalServerError
 		if err == utils.ErrNotFound {
@@ -93,6 +100,18 @@ func (h *CartHandler) UpdateItem(c *gin.Context) {
 		return
 	}
 
+	// Validate request
+	if err := validator.ValidateUpdateCartItemRequest(req.Quantity); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Validate cart item ID
+	if err := validator.ValidateCartItemID(itemID); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	if err := h.service.UpdateItem(c.Request.Context(), userID, itemID, req.Quantity); err != nil {
 		status := http.StatusInternalServerError
 		if err == utils.ErrForbidden {
@@ -113,6 +132,12 @@ func (h *CartHandler) RemoveItem(c *gin.Context) {
 	itemID := parseUint(c.Param("itemId"))
 	val, _ := c.Get("user_id")
 	userID := val.(uint)
+
+	// Validate cart item ID
+	if err := validator.ValidateCartItemID(itemID); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	if err := h.service.RemoveItem(c.Request.Context(), userID, itemID); err != nil {
 		status := http.StatusInternalServerError
