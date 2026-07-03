@@ -6,7 +6,8 @@
 *.dylib
 bin/
 dist/
-
+.mod
+.sum
 # Test binary
 *.test
 
